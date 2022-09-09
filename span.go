@@ -3,19 +3,17 @@ package span
 import (
 	"errors"
 	"fmt"
-	"golang.org/x/exp/constraints"
-	"sort"
 )
 
-type Number interface {
-	constraints.Integer | constraints.Float
+type number interface {
+	~float32 | ~float64 | ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr | ~int | ~int8 | ~int16 | ~int32 | ~int64
 }
 
-type Span[T Number] struct {
+type span[T number] struct {
 	Start, End T
 }
 
-func (x Span[T]) IndexIn(list []Span[T]) int {
+func (x span[T]) IndexIn(list []span[T]) int {
 
 	for i, span := range list {
 		if span.Equal(x) {
@@ -25,13 +23,7 @@ func (x Span[T]) IndexIn(list []Span[T]) int {
 	return -1
 }
 
-func Sort[T Number](list []Span[T]) {
-	sort.Slice(list, func(i, j int) bool {
-		return list[i].Start < list[j].Start
-	})
-}
-
-func (x Span[T]) Len() uint {
+func (x span[T]) Len() uint {
 	l := x.End - x.Start
 	if l < 0 {
 		return uint(-l)
@@ -39,55 +31,55 @@ func (x Span[T]) Len() uint {
 	return uint(l)
 }
 
-func (x Span[T]) Equal(y Span[T]) bool {
+func (x span[T]) Equal(y span[T]) bool {
 	r := x.End == y.End && x.Start == y.Start
 	return r
 }
-func (x Span[T]) String() string {
+func (x span[T]) String() string {
 	return fmt.Sprintf("[%+v, %+v)", x.Start, x.End)
 }
-func (x Span[T]) RelationTo(y Span[T]) Relation {
+func (x span[T]) relationTo(y span[T]) relation {
 	lxly := compare(x.Start, y.Start)
 	lxgy := compare(x.Start, y.End)
 	gxly := compare(x.End, y.Start)
 	gxgy := compare(x.End, y.End)
 	switch {
 	case lxly == 0 && gxgy == 0:
-		return RelationEqual
+		return relationEqual
 	case gxly < 0:
-		return RelationBefore
+		return relationBefore
 	case lxly < 0 && gxly == 0 && gxgy < 0:
-		return RelationMeets
+		return relationMeets
 	case gxly == 0:
-		return RelationOverlaps
+		return relationOverlaps
 	case lxly > 0 && lxgy == 0 && gxgy > 0:
-		return RelationMetBy
+		return relationMetBy
 	case lxgy == 0:
-		return RelationOverlappedBy
+		return relationOverlappedBy
 	case lxgy > 0:
-		return RelationAfter
+		return relationAfter
 	case lxly < 0 && gxgy < 0:
-		return RelationOverlaps
+		return relationOverlaps
 	case lxly < 0 && gxgy == 0:
-		return RelationFinishedBy
+		return relationFinishedBy
 	case lxly < 0 && gxgy > 0:
-		return RelationContains
+		return relationContains
 	case lxly == 0 && gxgy < 0:
-		return RelationStarts
+		return relationStarts
 	case lxly == 0 && gxgy > 0:
-		return RelationStartedBy
+		return relationStartedBy
 	case lxly > 0 && gxgy < 0:
-		return RelationDuring
+		return relationDuring
 	case lxly > 0 && gxgy == 0:
-		return RelationFinishes
+		return relationFinishes
 	case lxly > 0 && gxgy > 0:
-		return RelationOverlappedBy
+		return relationOverlappedBy
 	default:
-		return RelationUnknown
+		return relationUnknown
 	}
 }
-func (x Span[T]) SubFrom(list []Span[T]) []Span[T] {
-	list2 := make([]Span[T], 0, len(list)+1)
+func (x span[T]) SubFrom(list []span[T]) []span[T] {
+	list2 := make([]span[T], 0, len(list)+1)
 	for _, y := range list {
 		for _, s := range y.sub(x) {
 			if s.Len() != 0 && s.IndexIn(list2) < 0 {
@@ -96,74 +88,56 @@ func (x Span[T]) SubFrom(list []Span[T]) []Span[T] {
 		}
 
 	}
-
 	return list2
 }
-func (x Span[T]) Contains(i T) bool {
+func (x span[T]) Contains(i T) bool {
 	return x.Start <= i && x.End > i
 }
 
-func (x Span[T]) AddTo(list []Span[T]) []Span[T] {
-	if len(list) == 0 {
-		return []Span[T]{x}
-	}
-	list2 := make([]Span[T], 0, len(list)+1)
-	tobe := x
+func (x span[T]) AddTo(list []span[T]) []span[T] {
+	list2 := make([]span[T], 0, len(list)+1)
 	for _, y := range list {
-		if result := y.add(tobe); len(result) == 1 {
-			tobe = result[0]
-		} else {
+		switch x.relationTo(y) {
+		case relationBefore,
+			relationAfter:
 			list2 = append(list2, y)
+		case relationMeets,
+			relationOverlaps,
+			relationFinishedBy:
+			x.End = y.End
+		case relationStarts,
+			relationDuring,
+			relationFinishes:
+			x = y
+		case relationOverlappedBy,
+			relationMetBy:
+			x.Start = y.Start
 		}
 	}
-	list2 = append(list2, tobe)
+	list2 = append(list2, x)
 	return list2
 }
 
-func (x Span[T]) add(y Span[T]) []Span[T] {
-	switch x.RelationTo(y) {
-	case RelationBefore,
-		RelationAfter:
-		return []Span[T]{x, y}
-	case RelationMeets,
-		RelationOverlaps,
-		RelationFinishedBy:
-		return []Span[T]{{x.Start, y.End}}
-	case RelationContains,
-		RelationEqual,
-		RelationStartedBy:
-		return []Span[T]{x}
-	case RelationStarts,
-		RelationDuring,
-		RelationFinishes:
-		return []Span[T]{y}
-	case RelationOverlappedBy,
-		RelationMetBy:
-		return []Span[T]{{y.Start, x.End}}
-	}
-	panic(errors.New("span: unreachable reached"))
-}
-
-func (x Span[T]) sub(y Span[T]) []Span[T] {
-	switch x.RelationTo(y) {
-	case RelationStarts,
-		RelationEqual,
-		RelationDuring,
-		RelationFinishes:
+func (x span[T]) sub(y span[T]) []span[T] {
+	switch x.relationTo(y) {
+	case relationStarts,
+		relationEqual,
+		relationDuring,
+		relationFinishes:
 		return nil
-	case RelationBefore,
-		RelationMeets,
-		RelationMetBy,
-		RelationAfter:
-		return []Span[T]{x}
-	case RelationOverlaps,
-		RelationFinishedBy:
-		return []Span[T]{{x.Start, y.Start}}
-	case RelationContains:
-		return []Span[T]{{x.Start, y.Start}, {y.End, x.End}}
-	case RelationStartedBy,
-		RelationOverlappedBy:
-		return []Span[T]{{y.End, x.End}}
+	case relationBefore,
+		relationMeets,
+		relationMetBy,
+		relationAfter:
+		return []span[T]{x}
+	case relationOverlaps,
+		relationFinishedBy:
+		return []span[T]{{x.Start, y.Start}}
+	case relationContains:
+		return []span[T]{{x.Start, y.Start}, {y.End, x.End}}
+	case relationStartedBy,
+		relationOverlappedBy:
+		return []span[T]{{y.End, x.End}}
 	}
 	panic(errors.New("span: unreachable reached"))
 }

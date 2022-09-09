@@ -1,10 +1,10 @@
 package span
 
-// Relation represents how two spans RelationTo to each other.
-type Relation int
+// relation represents how two spans relationTo to each other.
+type relation int
 
 const (
-	RelationUnknown Relation = iota
+	relationUnknown relation = iota
 
 	/*
 		Interval x is before Interval y.
@@ -16,7 +16,7 @@ const (
 		          | y |
 		          +---+
 	*/
-	RelationBefore
+	relationBefore
 
 	/*
 		Interval x meets Interval y.
@@ -28,7 +28,7 @@ const (
 		        | y |
 		        +---+
 	*/
-	RelationMeets
+	relationMeets
 
 	/*
 		Interval x overlaps Interval y.
@@ -40,7 +40,7 @@ const (
 		      | y |
 		      +---+
 	*/
-	RelationOverlaps
+	relationOverlaps
 
 	/*
 		Interval x is finished by Interval y.
@@ -52,7 +52,7 @@ const (
 		      | y |
 		      +---+
 	*/
-	RelationFinishedBy
+	relationFinishedBy
 
 	/*
 		Interval x contains Interval y.
@@ -64,7 +64,7 @@ const (
 		      | y |
 		      +---+
 	*/
-	RelationContains
+	relationContains
 
 	/*
 		Interval x starts Interval y.
@@ -76,7 +76,7 @@ const (
 		    |  y  |
 		    +-----+
 	*/
-	RelationStarts
+	relationStarts
 
 	/*
 		Interval x is equal to Interval y.
@@ -88,7 +88,7 @@ const (
 		    | y |
 		    +---+
 	*/
-	RelationEqual
+	relationEqual
 
 	/*
 		Interval x is started by Interval y.
@@ -100,7 +100,7 @@ const (
 		    | y |
 		    +---+
 	*/
-	RelationStartedBy
+	relationStartedBy
 
 	/*
 		Interval x is during Interval y.
@@ -112,7 +112,7 @@ const (
 		    |   y   |
 		    +-------+
 	*/
-	RelationDuring
+	relationDuring
 
 	/*
 		Interval x finishes Interval y.
@@ -124,7 +124,7 @@ const (
 		    |  y  |
 		    +-----+
 	*/
-	RelationFinishes
+	relationFinishes
 
 	/*
 		Interval x is overlapped by Interval y.
@@ -136,7 +136,7 @@ const (
 		    | y |
 		    +---+
 	*/
-	RelationOverlappedBy
+	relationOverlappedBy
 
 	/*
 		Interval x is met by Interval y.
@@ -148,7 +148,7 @@ const (
 		    | y |
 		    +---+
 	*/
-	RelationMetBy
+	relationMetBy
 
 	/*
 		Interval x is after Interval y.
@@ -160,39 +160,39 @@ const (
 		    | y |
 		    +---+
 	*/
-	RelationAfter
+	relationAfter
 )
 
-//Invert a Relation. Every Relation has an inverse.
-func (r Relation) Invert() Relation {
+//Invert a relation. Every relation has an inverse.
+func (r relation) Invert() relation {
 	switch r {
-	case RelationAfter:
-		return RelationBefore
-	case RelationBefore:
-		return RelationAfter
-	case RelationContains:
-		return RelationDuring
-	case RelationDuring:
-		return RelationContains
-	case RelationEqual:
-		return RelationEqual
-	case RelationFinishedBy:
-		return RelationFinishes
-	case RelationFinishes:
-		return RelationFinishedBy
-	case RelationMeets:
-		return RelationMetBy
-	case RelationMetBy:
-		return RelationMeets
-	case RelationOverlappedBy:
-		return RelationOverlaps
-	case RelationOverlaps:
-		return RelationOverlappedBy
-	case RelationStartedBy:
-		return RelationStarts
-	case RelationStarts:
-		return RelationStartedBy
+	case relationAfter:
+		return relationBefore
+	case relationBefore:
+		return relationAfter
+	case relationContains:
+		return relationDuring
+	case relationDuring:
+		return relationContains
+	case relationEqual:
+		return relationEqual
+	case relationFinishedBy:
+		return relationFinishes
+	case relationFinishes:
+		return relationFinishedBy
+	case relationMeets:
+		return relationMetBy
+	case relationMetBy:
+		return relationMeets
+	case relationOverlappedBy:
+		return relationOverlaps
+	case relationOverlaps:
+		return relationOverlappedBy
+	case relationStartedBy:
+		return relationStarts
+	case relationStarts:
+		return relationStartedBy
 	default:
-		return RelationUnknown
+		return relationUnknown
 	}
 }
