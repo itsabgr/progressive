@@ -54,6 +54,8 @@ func (stream *Stream) Close() error {
 		return ErrClosed
 	}
 	stream.closed = true
+	stream.buff = nil
+	stream.puzzle = nil
 	return nil
 }
 
