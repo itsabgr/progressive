@@ -108,15 +108,15 @@ func (x Span[T]) AddTo(list []Span[T]) []Span[T] {
 		return []Span[T]{x}
 	}
 	list2 := make([]Span[T], 0, len(list)+1)
+	tobe := x
 	for _, y := range list {
-		result := y.add(x)
-		for _, s := range result {
-			if s.Len() != 0 && s.IndexIn(list2) < 0 {
-				list2 = append(list2, s)
-			}
+		if result := y.add(tobe); len(result) == 1 {
+			tobe = result[0]
+		} else {
+			list2 = append(list2, y)
 		}
 	}
-
+	list2 = append(list2, tobe)
 	return list2
 }
 
