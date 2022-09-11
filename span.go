@@ -23,12 +23,12 @@ func (x span[T]) IndexIn(list []span[T]) int {
 	return -1
 }
 
-func (x span[T]) Len() uint {
+func (x span[T]) Len() T {
 	l := x.End - x.Start
 	if l < 0 {
-		return uint(-l)
+		return -l
 	}
-	return uint(l)
+	return l
 }
 
 func (x span[T]) Equal(y span[T]) bool {
