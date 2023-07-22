@@ -1,3 +1,3 @@
-module github.com/cryptonetworking/progressive
+module github.com/itsabgr/progressive
 
 go 1.18
